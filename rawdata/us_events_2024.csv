@@ -1,0 +1,21 @@
+date,name,type,impact_note
+2024-01-01,New Year's Day,Federal Holiday,Heavy leisure travel; early-morning/late-night banks often full.
+2024-01-15,Martin Luther King Jr. Day,Federal Holiday,Long-weekend leisure peak.
+2024-02-11,Super Bowl LVIII,Major Event,Las Vegas focus (LAS) with spill to PHX/LAX/DFW; inbound peak Fri-Sat and outbound Mon.
+2024-02-19,Presidents' Day,Federal Holiday,Ski and school-break travel surge across the week.
+2024-03-31,Easter Sunday,Holiday,Return-peak weekend for family/leisure travel.
+2024-04-08,Total Solar Eclipse,Major Event,Texas-to-Maine corridor; spikes near AUS/SAT/DFW/CLE/BUF/BOS/STL/IND.
+2024-05-27,Memorial Day,Federal Holiday,Summer kickoff; nationwide demand spike (Fri-Mon).
+2024-07-04,Independence Day,Federal Holiday,Holiday traffic plus convective-weather risk.
+2024-07-05,Independence Day Return,Travel Surge,Heavy return day; afternoon/evening peaks.
+2024-08-30,Labor Day Friday,Travel Surge,Outbound peak for Labor Day weekend.
+2024-09-02,Labor Day,Federal Holiday,Return peak; afternoon/evening congestion.
+2024-10-14,Columbus Day / Indigenous Peoples' Day,Federal Holiday,Long-weekend leisure travel.
+2024-11-11,Veterans Day,Federal Holiday,Moderate bump; some government travel.
+2024-11-27,Thanksgiving Eve,Travel Surge,Busiest outbound day; hub congestion nationwide.
+2024-11-28,Thanksgiving Day,Federal Holiday,Reduced schedules; morning weather issues can cascade.
+2024-11-29,Thanksgiving Return Peak,Travel Surge,Major return flows; afternoon/evening peaks.
+2024-12-22,Christmas Peak Outbound,Holiday Travel,Start of Christmas rush; weather-sensitive.
+2024-12-25,Christmas Day,Federal Holiday,Reduced schedule; limited recovery if weather hits.
+2024-12-29,Christmas/New Year Return Peak,Holiday Travel,Heavy returns; tight connections.
+2024-12-31,New Year's Eve,Holiday,Evening-heavy travel; reduced schedules overnight.

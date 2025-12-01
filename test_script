@@ -17,9 +17,11 @@ from typing import Iterable, Optional
 import pandas as pd
 from pandas import DataFrame, Series
 
+from event_utils import load_events_map
 
 DATA_PATH = Path("rawdata/flight_data_2024.csv")
 SAMPLE_PATH = Path("rawdata/flight_data_2024_sample.csv")
+EVENTS_PATH = Path("rawdata/us_events_2024.csv")
 
 # FAA convention: arrival delay of 15 minutes or more counts as a delayed flight.
 ARRIVAL_DELAY_THRESHOLD = 15
@@ -171,7 +173,7 @@ def clean_chunk(df: DataFrame) -> DataFrame:
     return cleaned
 
 
-def summarize_delays(chunks: Iterable[DataFrame]) -> dict:
+def summarize_delays(chunks: Iterable[DataFrame], events_map: Optional[dict] = None) -> dict:
     total_rows = 0
     processed_rows = 0
     delayed_rows = 0
@@ -196,6 +198,12 @@ def summarize_delays(chunks: Iterable[DataFrame]) -> dict:
     hour_total = Series(dtype="int64")
     hour_delayed = Series(dtype="int64")
     reason_delay_minutes = Series(dtype="float64")
+    event_total = Series(dtype="int64")
+    event_delayed = Series(dtype="int64")
+    event_delay_minutes = Series(dtype="float64")
+    event_origin_total = Series(dtype="int64")  # (event, origin) flights
+    event_origin_delayed = Series(dtype="int64")  # (event, origin) delayed flights
+    event_origin_delay_minutes = Series(dtype="float64")
     sample_delays = []
 
     for chunk in chunks:
@@ -281,6 +289,37 @@ def summarize_delays(chunks: Iterable[DataFrame]) -> dict:
             cleaned.loc[delayed_mask].groupby("reason", observed=True)["arr_delay"].sum(),
             fill_value=0,
         )
+        if events_map:
+            cleaned["event_name"] = cleaned["fl_date"].dt.date.map(events_map).fillna("none")
+            event_total = event_total.add(
+                cleaned["event_name"].value_counts(), fill_value=0
+            )
+            event_delayed = event_delayed.add(
+                cleaned.loc[delayed_mask, "event_name"].value_counts(), fill_value=0
+            )
+            event_delay_minutes = event_delay_minutes.add(
+                cleaned.loc[delayed_mask]
+                .groupby("event_name", observed=True)["arr_delay"]
+                .sum(),
+                fill_value=0,
+            )
+            # per-origin breakdown on event days
+            event_origin_total = event_origin_total.add(
+                cleaned.groupby(["event_name", "origin"], observed=True).size(),
+                fill_value=0,
+            )
+            event_origin_delayed = event_origin_delayed.add(
+                cleaned.loc[delayed_mask]
+                .groupby(["event_name", "origin"], observed=True)
+                .size(),
+                fill_value=0,
+            )
+            event_origin_delay_minutes = event_origin_delay_minutes.add(
+                cleaned.loc[delayed_mask]
+                .groupby(["event_name", "origin"], observed=True)["arr_delay"]
+                .sum(),
+                fill_value=0,
+            )
 
         if len(sample_delays) < 10:
             sample_rows = cleaned.loc[
@@ -326,6 +365,28 @@ def summarize_delays(chunks: Iterable[DataFrame]) -> dict:
         "month_rates": (month_delayed / month_total * 100).sort_index(),
         "weekday_rates": (weekday_delayed / weekday_total * 100).sort_index(),
         "hour_rates": (hour_delayed / hour_total * 100).sort_index(),
+        "event_total": event_total.sort_values(ascending=False).astype(int)
+        if not event_total.empty
+        else Series(dtype="int64"),
+        "event_delayed": event_delayed.sort_values(ascending=False).astype(int)
+        if not event_delayed.empty
+        else Series(dtype="int64"),
+        "event_delay_minutes": event_delay_minutes.sort_values(
+            ascending=False
+        )
+        if not event_delay_minutes.empty
+        else Series(dtype="float64"),
+        "event_origin_total": event_origin_total.sort_values(ascending=False).astype(int)
+        if not event_origin_total.empty
+        else Series(dtype="int64"),
+        "event_origin_delayed": event_origin_delayed.sort_values(ascending=False).astype(int)
+        if not event_origin_delayed.empty
+        else Series(dtype="int64"),
+        "event_origin_delay_minutes": event_origin_delay_minutes.sort_values(
+            ascending=False
+        )
+        if not event_origin_delay_minutes.empty
+        else Series(dtype="float64"),
         "sample_delays": sample_delays,
     }
 
@@ -411,6 +472,75 @@ def print_summary(summary: dict, top_n: int = 10, min_airport_flights: int = DEF
     print("\nDelay rate by scheduled departure hour (%):")
     print(summary["hour_rates"].to_string())
 
+    if not summary["event_total"].empty:
+        event_rates = (summary["event_delayed"] / summary["event_total"] * 100).sort_values(
+            ascending=False
+        )
+        print("\nDelay rate by notable event day (%), including 'none' for non-event days:")
+        event_df = pd.DataFrame(
+            {
+                "flights": summary["event_total"],
+                "delayed": summary["event_delayed"],
+                "delay_rate_pct": event_rates,
+                "delay_minutes": summary["event_delay_minutes"],
+            }
+        ).fillna(0)
+        print(event_df.head(top_n if "none" not in event_df.index else top_n + 1).to_string())
+        # per-airport impact: compare each event day vs that airport's non-event baseline
+        if not summary["event_origin_total"].empty:
+            event_origin_df = pd.DataFrame(
+                {
+                    "flights": summary["event_origin_total"],
+                    "delayed": summary["event_origin_delayed"],
+                    "delay_minutes": summary["event_origin_delay_minutes"],
+                }
+            ).fillna(0)
+            event_origin_df["delay_rate_pct"] = (
+                event_origin_df["delayed"] / event_origin_df["flights"] * 100
+            )
+            if ("none" in summary["event_total"].index) and (
+                "none" in event_origin_df.index.get_level_values(0)
+            ):
+                baseline_by_origin = (
+                    event_origin_df.xs("none", level=0)["delay_rate_pct"]
+                )
+                event_origin_df["baseline_rate_origin"] = (
+                    event_origin_df.index.get_level_values(1).map(baseline_by_origin)
+                )
+                event_origin_df["rate_delta_vs_origin_baseline"] = (
+                    event_origin_df["delay_rate_pct"]
+                    - event_origin_df["baseline_rate_origin"]
+                )
+            else:
+                event_origin_df["baseline_rate_origin"] = pd.NA
+                event_origin_df["rate_delta_vs_origin_baseline"] = pd.NA
+
+            event_origin_df = event_origin_df.reset_index(names=["event", "origin"])
+            event_origin_df = event_origin_df[
+                (event_origin_df["event"] != "none")
+                & (event_origin_df["flights"] >= min_airport_flights)
+            ]
+            event_origin_df = event_origin_df.sort_values(
+                ["rate_delta_vs_origin_baseline", "delay_rate_pct"],
+                ascending=False,
+                na_position="last",
+            )
+            print(
+                f"\nTop {top_n} event+origin pairs by rate delta vs origin non-event baseline "
+                f"(min {min_airport_flights} flights on that event day):"
+            )
+            cols = [
+                "event",
+                "origin",
+                "flights",
+                "delayed",
+                "delay_rate_pct",
+                "baseline_rate_origin",
+                "rate_delta_vs_origin_baseline",
+                "delay_minutes",
+            ]
+            print(event_origin_df[cols].head(top_n).to_string(index=False))
+
     if summary["sample_delays"]:
         print("\nSample delayed flights:")
         for row in summary["sample_delays"]:
@@ -458,12 +588,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    events_map = load_events_map(EVENTS_PATH)
     chunks = read_in_chunks(
         use_sample=args.sample,
         nrows=args.nrows,
         chunk_size=args.chunk_size,
     )
-    summary = summarize_delays(chunks)
+    summary = summarize_delays(chunks, events_map=events_map)
     print_summary(summary, top_n=args.top, min_airport_flights=args.min_airport_flights)
 
 
