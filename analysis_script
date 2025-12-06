@@ -615,12 +615,24 @@ def print_summary(
             {
                 "weather_delayed": summary["weather_origin_counts"],
                 "weather_minutes": summary["weather_origin_minutes"],
+                "flights_total": summary["origin_total"],
             }
         ).fillna(0)
+        weather_orig_df["weather_rate_pct"] = (
+            weather_orig_df["weather_delayed"] / weather_orig_df["flights_total"] * 100
+        )
         print(
-            weather_orig_df.head(top_n)
+            weather_orig_df.sort_values("weather_delayed", ascending=False)
+            .head(top_n)
             .rename(index=AIRPORT_NAMES)
-            .to_string()
+            .to_string(
+                columns=[
+                    "flights_total",
+                    "weather_delayed",
+                    "weather_rate_pct",
+                    "weather_minutes",
+                ]
+            )
         )
 
     if not summary["weather_dest_counts"].empty:
@@ -629,12 +641,24 @@ def print_summary(
             {
                 "weather_delayed": summary["weather_dest_counts"],
                 "weather_minutes": summary["weather_dest_minutes"],
+                "flights_total": summary["dest_total"],
             }
         ).fillna(0)
+        weather_dest_df["weather_rate_pct"] = (
+            weather_dest_df["weather_delayed"] / weather_dest_df["flights_total"] * 100
+        )
         print(
-            weather_dest_df.head(top_n)
+            weather_dest_df.sort_values("weather_delayed", ascending=False)
+            .head(top_n)
             .rename(index=AIRPORT_NAMES)
-            .to_string()
+            .to_string(
+                columns=[
+                    "flights_total",
+                    "weather_delayed",
+                    "weather_rate_pct",
+                    "weather_minutes",
+                ]
+            )
         )
 
     # Airport delay stats (rate and total delay minutes) with a minimum flight threshold

@@ -51,7 +51,12 @@ def load_event_lookup(path: Path) -> Dict[Tuple, str]:
         away = row.get("Away Team", "")
         stadium = row.get("Stadium Name", "")
         airport = row.get("airport", "")
-        return f"{league}: {away} @ {home} ({stadium} / {airport})"
+        date_str = row.get("date")
+        if pd.notna(date_str):
+            date_str = str(date_str)
+        else:
+            date_str = "unknown-date"
+        return f"{date_str} | {league}: {away} @ {home} ({stadium} / {airport})"
 
     df["event_name"] = df.apply(_event_label, axis=1)
 
