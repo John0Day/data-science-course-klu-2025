@@ -238,6 +238,8 @@ def summarize_delays(chunks: Iterable[DataFrame], events_lookup: Optional[dict] 
     arr_delay_count_all = 0
     arr_delay_sum_delayed = 0.0
     max_arr_delay = None
+    weather_delayed = 0
+    weather_delay_minutes_total = 0.0
 
     reason_counts = Series(dtype="int64")
     carrier_counts = Series(dtype="int64")
@@ -247,6 +249,10 @@ def summarize_delays(chunks: Iterable[DataFrame], events_lookup: Optional[dict] 
     dest_total = Series(dtype="int64")  # all flights per destination
     origin_delay_minutes = Series(dtype="float64")
     dest_delay_minutes = Series(dtype="float64")
+    weather_origin_counts = Series(dtype="int64")
+    weather_dest_counts = Series(dtype="int64")
+    weather_origin_minutes = Series(dtype="float64")
+    weather_dest_minutes = Series(dtype="float64")
     route_counts = Series(dtype="int64")  # delayed flights per route
     route_total = Series(dtype="int64")  # all flights per route
     route_delay_minutes = Series(dtype="float64")
@@ -329,6 +335,31 @@ def summarize_delays(chunks: Iterable[DataFrame], events_lookup: Optional[dict] 
         dest_delay_minutes = dest_delay_minutes.add(
             cleaned.loc[delayed_mask]
             .groupby("dest", observed=True)["arr_delay"]
+            .sum(),
+            fill_value=0,
+        )
+        weather_mask = cleaned["weather_delay"].fillna(0) > 0
+        weather_delayed += weather_mask.sum()
+        weather_delay_minutes_total += cleaned.loc[weather_mask, "weather_delay"].sum(
+            skipna=True
+        )
+        weather_origin_counts = weather_origin_counts.add(
+            cleaned.loc[weather_mask].groupby("origin", observed=True).size(),
+            fill_value=0,
+        )
+        weather_dest_counts = weather_dest_counts.add(
+            cleaned.loc[weather_mask].groupby("dest", observed=True).size(),
+            fill_value=0,
+        )
+        weather_origin_minutes = weather_origin_minutes.add(
+            cleaned.loc[weather_mask]
+            .groupby("origin", observed=True)["weather_delay"]
+            .sum(),
+            fill_value=0,
+        )
+        weather_dest_minutes = weather_dest_minutes.add(
+            cleaned.loc[weather_mask]
+            .groupby("dest", observed=True)["weather_delay"]
             .sum(),
             fill_value=0,
         )
@@ -467,6 +498,8 @@ def summarize_delays(chunks: Iterable[DataFrame], events_lookup: Optional[dict] 
         "processed_rows": processed_rows,
         "delayed_rows": delayed_rows,
         "delay_rate_pct": (delayed_rows / processed_rows * 100) if processed_rows else 0,
+        "weather_delayed": weather_delayed,
+        "weather_delay_minutes_total": weather_delay_minutes_total,
         "arr_delay_mean_all": (arr_delay_sum_all / arr_delay_count_all)
         if arr_delay_count_all
         else 0,
@@ -487,6 +520,18 @@ def summarize_delays(chunks: Iterable[DataFrame], events_lookup: Optional[dict] 
             ascending=False
         ),
         "dest_delay_minutes": dest_delay_minutes.sort_values(ascending=False),
+        "weather_origin_counts": weather_origin_counts.sort_values(ascending=False).astype(int)
+        if not weather_origin_counts.empty
+        else Series(dtype="int64"),
+        "weather_dest_counts": weather_dest_counts.sort_values(ascending=False).astype(int)
+        if not weather_dest_counts.empty
+        else Series(dtype="int64"),
+        "weather_origin_minutes": weather_origin_minutes.sort_values(ascending=False)
+        if not weather_origin_minutes.empty
+        else Series(dtype="float64"),
+        "weather_dest_minutes": weather_dest_minutes.sort_values(ascending=False)
+        if not weather_dest_minutes.empty
+        else Series(dtype="float64"),
         "route_counts": route_counts.sort_values(ascending=False).astype(int),
         "route_total": route_total.sort_values(ascending=False).astype(int),
         "route_delay_minutes": route_delay_minutes.sort_values(ascending=False),
@@ -538,6 +583,12 @@ def print_summary(
         f"mean among delayed flights: {summary['arr_delay_mean_delayed']:.2f} minutes; "
         f"max observed arrival delay: {summary['max_arr_delay']}"
     )
+    if summary["weather_delayed"]:
+        weather_share = summary["weather_delayed"] / summary["delayed_rows"] * 100 if summary["delayed_rows"] else 0
+        print(
+            f"Weather-attributed delays (weather_delay > 0): {summary['weather_delayed']:,} flights "
+            f"({weather_share:.2f}% of delayed), total weather minutes: {summary['weather_delay_minutes_total']:.0f}"
+        )
 
     print("\nDelay reasons (flights with positive minutes in the column):")
     if summary["reason_counts"].empty:
@@ -557,6 +608,34 @@ def print_summary(
 
     print(f"\nTop {top_n} destinations by delayed flights:")
     print(summary["dest_counts"].head(top_n).rename(index=AIRPORT_NAMES).to_string())
+
+    if not summary["weather_origin_counts"].empty:
+        print(f"\nWeather-driven delays: top {top_n} origins (weather_delay > 0):")
+        weather_orig_df = pd.DataFrame(
+            {
+                "weather_delayed": summary["weather_origin_counts"],
+                "weather_minutes": summary["weather_origin_minutes"],
+            }
+        ).fillna(0)
+        print(
+            weather_orig_df.head(top_n)
+            .rename(index=AIRPORT_NAMES)
+            .to_string()
+        )
+
+    if not summary["weather_dest_counts"].empty:
+        print(f"\nWeather-driven delays: top {top_n} destinations (weather_delay > 0):")
+        weather_dest_df = pd.DataFrame(
+            {
+                "weather_delayed": summary["weather_dest_counts"],
+                "weather_minutes": summary["weather_dest_minutes"],
+            }
+        ).fillna(0)
+        print(
+            weather_dest_df.head(top_n)
+            .rename(index=AIRPORT_NAMES)
+            .to_string()
+        )
 
     # Airport delay stats (rate and total delay minutes) with a minimum flight threshold
     origin_stats = pd.DataFrame(
@@ -590,12 +669,24 @@ def print_summary(
     print(
         f"\nTop {top_n} origin airports by delay rate (min {min_airport_flights} flights):"
     )
-    print(origin_stats.head(top_n)[["flights", "delayed", "delay_rate_pct", "delay_minutes"]].to_string())
+    print(
+        origin_stats.head(top_n)[
+            ["flights", "delayed", "delay_rate_pct", "delay_minutes"]
+        ]
+        .rename(index=AIRPORT_NAMES)
+        .to_string()
+    )
 
     print(
         f"\nTop {top_n} destination airports by delay rate (min {min_airport_flights} flights):"
     )
-    print(dest_stats.head(top_n)[["flights", "delayed", "delay_rate_pct", "delay_minutes"]].to_string())
+    print(
+        dest_stats.head(top_n)[
+            ["flights", "delayed", "delay_rate_pct", "delay_minutes"]
+        ]
+        .rename(index=AIRPORT_NAMES)
+        .to_string()
+    )
 
     print(f"\nTop {top_n} routes by delayed flights:")
     print(summary["route_counts"].head(top_n).to_string())
