@@ -3,7 +3,7 @@
 #
 # Flight delay analysis
 
-- Full dataset: `python3 test_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
+- Full dataset: `python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
   - `--chunk-size`: Streaming chunk size; lower if RAM is tight, higher if plenty available.
   - `--top`: How many rows to display in most summary tables.
   - `--min-airport-flights`: Minimum flights for airport-level rate tables (display only; calculations use all data).
