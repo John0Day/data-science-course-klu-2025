@@ -1,18 +1,21 @@
 # data-science-course-klu-2025
 # a simple Data-Science project for the course Data-Science @ KLU
 #
-# Commands:
+# Flight delay analysis
 
-test_script: python3 test_script --chunk-size 250000 --top 10 --min-airport-flights 1500
+- Full dataset: `python3 test_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
+  - `--chunk-size`: Streaming chunk size; lower if RAM is tight, higher if plenty available.
+  - `--top`: How many rows to display in most summary tables.
+  - `--min-airport-flights`: Minimum flights for airport-level rate tables (display only; calculations use all data).
+  - `--event-top`: How many event rows to show (events from `rawdata/combined_schedules_with_airports.csv`).
+- Outputs include: delay rates (month, weekday, hour), carrier/airport counts, route stats, average delay minutes for top origins/destinations, top routes, largest airports vs overall, event-day delay table.
 
-Chunk Size can be manipulated as well as the airport flights search restriction parameter.
+# Baseline delay model
 
-# Pipelin-Model:
+- Quick test on sample: `python3 baseline_model.py --sample --nrows 50000 --model logreg`
+- Random Forest on a subset: `python3 baseline_model.py --nrows 200000 --model rf`
+- Full run: `python3 baseline_model.py --model logreg --test-size 0.2`
 
-Schneller Test auf Sample:
-baseline_model.py: python3 baseline_model.py --sample --nrows 50000 --model logreg
-
-Random Forest auf Teilmenge:
-python3 baseline_model.py --nrows 200000 --model rf --top 10
-
-Vollständiger Lauf: python3 baseline_model.py --model logreg --test-size 0.2
+Notes:
+- `baseline_model.py` uses One-Hot + StandardScaler to predict delays (arr_delay ≥ 15); metrics: Accuracy, Precision, Recall, F1, Confusion Matrix.
+- Dependencies: `pandas`, `scikit-learn`.
