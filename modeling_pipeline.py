@@ -53,7 +53,7 @@ from sklearn.model_selection import (
 )
 from sklearn.preprocessing import StandardScaler
 
-import lightgbm as lgb
+import lightgbm as lgb  # Assumes lightgbm is installed; pip install lightgbm
 
 # Optional plotting for diagnostics
 try:  # pragma: no cover
