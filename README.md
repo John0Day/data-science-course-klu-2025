@@ -9,11 +9,19 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 
 ## Setup
 - Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
+- `lightgbm` for the full modeling pipeline (`python3 -m pip install lightgbm`)—requires a C/C++ build toolchain.
 - Optional: `xgboost` (only used by the legacy `Felipe` script).
 - Install deps (example):  
-  `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
+  `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm`
 
 ## Core scripts
+
+### End-to-end modeling pipeline (classification, regression, clustering)
+`python3 modeling_pipeline.py --sample --nrows 50000 --diagnostics`
+- Uses memory-optimized, chunked loading from `CSV Files/flight_data_2024.csv` (or `flight_data_2024_sample.csv` when `--sample` is set).
+- Models: Logistic Regression, Random Forest, LightGBM classifier; Linear Regression, Gradient Boosting Regressor, LightGBM regressor; MiniBatchKMeans clustering.
+- Flags: `--sample`, `--nrows`, `--chunk-size`, `--diagnostics` (plots/learning curves), `--ev-costs C_TP C_FP C_FN C_TN` for expected-value thresholds.
+- Outputs metrics to stdout; saves ROC/learning/complexity curves when matplotlib is available.
 
 ### Analysis: delays, routes, events, weather
 `python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
