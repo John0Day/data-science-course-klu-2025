@@ -15,6 +15,8 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ## Tests
 - Install pytest: `python3 -m pip install pytest`
 - Run: `python3 -m pytest`
+- Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
+- Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
 
 ## Runner (interactive)
 `python3 runner.py` — choose between analysis, plots, route classifier, baseline model, or full pipeline.
