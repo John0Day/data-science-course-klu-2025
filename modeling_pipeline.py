@@ -68,19 +68,14 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 HERE = Path(__file__).resolve().parent
+RAW_DIR = HERE / "rawdata"
+DATA_PATH = RAW_DIR / "flight_data_2024.csv"
+SAMPLE_PATH = RAW_DIR / "flight_data_2024_sample.csv"  # smaller sample for quick tests
 
-for candidate in (HERE, HERE.parent):
-    csv_dir = candidate / "CSV Files"
-    if csv_dir.exists():
-        PROJECT_ROOT = candidate  # kept for possible future use
-        DATA_DIR = csv_dir
-        break
-else:  # pragma: no cover
-    raise FileNotFoundError("Could not locate 'CSV Files' directory (expected 'CSV Files').")
-
-# Point to full data; for testing, you can switch to SAMPLE_PATH via --sample
-DATA_PATH = DATA_DIR / "flight_data_2024.csv"
-SAMPLE_PATH = DATA_DIR / "flight_data_2024_sample.csv"  # smaller sample for quick tests
+if not DATA_PATH.exists() and not SAMPLE_PATH.exists():  # pragma: no cover
+    raise FileNotFoundError(
+        "Could not locate flight data in ./rawdata (expected flight_data_2024.csv or sample)."
+    )
 
 ARRIVAL_DELAY_THRESHOLD = 15  # minutes for classification target
 DEFAULT_CHUNK_SIZE = 250_000  # rows per chunk when streaming
