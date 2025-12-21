@@ -20,8 +20,9 @@ def test_core_dependencies_installed(module_name: str, pip_name: str, reason: st
     """
     try:
         importlib.import_module(module_name)
-    except ImportError as exc:  # pragma: no cover - triggers only when missing
-        pytest.fail(
-            f"Missing dependency '{module_name}' ({reason}). "
-            f"Install with `python3 -m pip install {pip_name}` (see README)."
+    except Exception as exc:  # pragma: no cover - triggers only when missing/broken
+        raise AssertionError(
+            f"Dependency '{module_name}' failed to import ({reason}). "
+            f"Install with `python3 -m pip install {pip_name}` (see README). "
+            f"Original error: {type(exc).__name__}: {exc}"
         ) from exc

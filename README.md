@@ -8,14 +8,17 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 
 ## Setup
 - Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
-- `lightgbm` for the full modeling pipeline: `python3 -m pip install lightgbm` (requires build tools).
+- `lightgbm` is required for the full modeling pipeline and the test suite: `python3 -m pip install lightgbm` (requires build tools).
 - Install essentials:  
   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
+ - Install all core deps (including tests) in one shot:
+   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm pytest`
 
 ## Tests
 - Install pytest: `python3 -m pip install pytest`
 - Run: `python3 -m pytest`
 - Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
+- Dependency check fails if a package is missing or if an install is broken; reinstall the listed package.
 - Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
 
 ## Runner (interactive)
@@ -26,7 +29,8 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ### Analysis: delays, routes, events, weather
 `python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 - Outputs: delay rates by month/weekday/hour, carrier/airport counts, routes, avg delay minutes for top origins/dests, largest airports vs overall, event-day table, weather-driven delays.
-- Flags: `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
+- Flags: `--sample`, `--nrows`, `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
+`python3 analysis_script --sample --nrows 50000 --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 
 ### Plot generation (PNGs)
 `python3 plot_generation.py --chunk-size 250000 --top 10`
