@@ -20,8 +20,14 @@ def test_core_dependencies_installed(module_name: str, pip_name: str, reason: st
     """
     try:
         importlib.import_module(module_name)
-    except ImportError as exc:  # pragma: no cover - triggers only when missing
+    except Exception as exc:  # pragma: no cover - triggers only when missing/broken
+        extra_hint = ""
+        if module_name == "lightgbm":
+            extra_hint = (
+                " On macOS you may also need `brew install libomp` before reinstalling lightgbm."
+            )
         pytest.fail(
-            f"Missing dependency '{module_name}' ({reason}). "
-            f"Install with `python3 -m pip install {pip_name}` (see README)."
-        ) from exc
+            f"Missing or broken dependency '{module_name}' ({reason}). "
+            f"Install with `python3 -m pip install {pip_name}` (see README).{extra_hint} "
+            f"Import error: {exc}"
+        )

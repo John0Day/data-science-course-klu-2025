@@ -8,23 +8,22 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 
 ## Setup
 - Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
-- `lightgbm` for the full modeling pipeline: `python3 -m pip install lightgbm` (requires build tools).
+- `lightgbm` for the full modeling pipeline: `python3 -m pip install lightgbm` (requires build tools; on macOS also install OpenMP via `brew install libomp`).
 - Install essentials:  
   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
 
 ## Tests
 - Install pytest: `python3 -m pip install pytest`
 - Run: `python3 -m pytest`
-- Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
 - Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
 
 ## Runner (interactive)
-`python3 runner.py` — choose between analysis, plots, route classifier, baseline model, or full pipeline.
+`python3 runner.py` — choose between analysis, plots, or the full modeling pipeline; returns to the menu after each run. Choose 0 to exit.
 
 ## Core scripts
 
 ### Analysis: delays, routes, events, weather
-`python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
+`python3 analysis_script.py --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 - Outputs: delay rates by month/weekday/hour, carrier/airport counts, routes, avg delay minutes for top origins/dests, largest airports vs overall, event-day table, weather-driven delays.
 - Flags: `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
 
