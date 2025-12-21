@@ -2,29 +2,13 @@
 
 This project explores 2024 US flight delays, event-day impacts (sports schedules), and baseline ML models.
 
-## Datasets (place in `rawdata/`)
-- `flight_data_2024.csv` (full) or `flight_data_2024_sample.csv` (quick tests)
-- `combined_schedules_with_airports.csv` (sports/venue events mapped to primary airports)
+## Setup 
+1. Download the Dataset from Kaggle, under this link: https://www.kaggle.com/datasets/hrishitpatil/flight-data-2024.
+2. Place the big dataset called `flight_data_2024.csv` in the `rawdata/` folder.
+3. Install all the needed dependencies: `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm`
+4. Run the command `python3 runner.py` to open the choices menu or run commands straight from the ##Core scirpt list further down.
 
-## Setup
-- Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
-- `lightgbm` is required for the full modeling pipeline and the test suite: `python3 -m pip install lightgbm` (requires build tools).
-- Install essentials:  
-  `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
- - Install all core deps (including tests) in one shot:
-   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm pytest`
-
-## Tests
-- Install pytest: `python3 -m pip install pytest`
-- Run: `python3 -m pytest`
-- Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
-- Dependency check fails if a package is missing or if an install is broken; reinstall the listed package.
-- Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
-
-## Runner (interactive)
-`python3 runner.py` — choose between analysis, plots, route classifier, baseline model, or full pipeline.
-
-## Core scripts
+## Core script
 
 ### Analysis: delays, routes, events, weather
 `python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
@@ -36,17 +20,6 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 `python3 plot_generation.py --chunk-size 250000 --top 10`
 - Saves plots to `plots/`: delay-rate by hour/month, weather top origins, event delays, top-5 origins heatmap, carrier delay rates.
 - Flags: `--sample`, `--nrows`, `--chunk-size`, `--top`.
-
-### Route/event delay classifier
-`python3 route_event_prediction.py --model logreg --top-routes 15 --min-route-flights 50`
-- Features: origin, dest, carrier, month, day_of_week, dep_hour, distance, event flag/name.
-- Models: logistic regression (default) or random forest (`--model rf`).
-- Shows metrics, route risk summary, event comparison. Use `--sample` / `--nrows` for quick runs.
-
-### Baseline delay model
-`python3 baseline_model.py --sample --nrows 50000 --model logreg`
-- Random Forest variant: `--model rf`; full run: `--model logreg --test-size 0.2`.
-- Predicts arr_delay ≥ 15 with One-Hot + StandardScaler; metrics: Accuracy, Precision, Recall, F1, Confusion Matrix.
 
 ### Modeling pipeline (heavy)
 `python3 modeling_pipeline.py --sample --nrows 50000 --diagnostics`
@@ -61,8 +34,3 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 - Cancelled/diverted flights and rows without `arr_delay` are dropped.
 - Event mapping comes from `combined_schedules_with_airports.csv`; missing airports default to `none`.
 
-
-## Notes
-- Delayed flight: `arr_delay >= 15`.
-- Cancelled/diverted flights and rows without `arr_delay` are dropped.
-- Event mapping comes from `combined_schedules_with_airports.csv`; missing airports default to `none`.
