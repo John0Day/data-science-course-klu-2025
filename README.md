@@ -8,13 +8,24 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 
 ## Setup
 - Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
+<<<<<<< HEAD
 - `lightgbm` for the full modeling pipeline: `python3 -m pip install lightgbm` (requires build tools; on macOS also install OpenMP via `brew install libomp`).
+=======
+- `lightgbm` is required for the full modeling pipeline and the test suite: `python3 -m pip install lightgbm` (requires build tools).
+>>>>>>> 6a3734e5a8e18b23aa2c849a7ce15cbeac624f68
 - Install essentials:  
   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
+ - Install all core deps (including tests) in one shot:
+   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm pytest`
 
 ## Tests
 - Install pytest: `python3 -m pip install pytest`
 - Run: `python3 -m pytest`
+<<<<<<< HEAD
+=======
+- Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
+- Dependency check fails if a package is missing or if an install is broken; reinstall the listed package.
+>>>>>>> 6a3734e5a8e18b23aa2c849a7ce15cbeac624f68
 - Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
 
 ## Runner (interactive)
@@ -25,7 +36,8 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ### Analysis: delays, routes, events, weather
 `python3 analysis_script.py --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 - Outputs: delay rates by month/weekday/hour, carrier/airport counts, routes, avg delay minutes for top origins/dests, largest airports vs overall, event-day table, weather-driven delays.
-- Flags: `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
+- Flags: `--sample`, `--nrows`, `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
+`python3 analysis_script --sample --nrows 50000 --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 
 ### Plot generation (PNGs)
 `python3 plot_generation.py --chunk-size 250000 --top 10`
@@ -46,8 +58,10 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ### Modeling pipeline (heavy)
 `python3 modeling_pipeline.py --sample --nrows 50000 --diagnostics`
 - Chunked loading from `rawdata/`, feature engineering, models: Logistic Regression, Random Forest, LightGBM (classification); Linear Regression, Gradient Boosting, LightGBM (regression); MiniBatchKMeans clustering.
-- Flags: `--sample`, `--nrows`, `--chunk-size`, `--diagnostics`, `--ev-costs C_TP C_FP C_FN C_TN`.
-- Saves ROC/learning/complexity curves if matplotlib is available; requires `lightgbm`.
+- Flags: `--sample`, `--nrows`, `--chunk-size`, `--diagnostics`, `--plots`, `--ev-costs C_TP C_FP C_FN C_TN`.
+- Use `--plots` to save confusion matrices, profit curve, feature importance, regression, and clustering PNGs; `--diagnostics` adds ROC/learning/complexity curves (matplotlib required). Requires `lightgbm`.
+- Use `--sample` for the smaller dataset; omit it to run on the full CSV.
+`python3 modeling_pipeline.py --sample --nrows 50000 --plots --diagnostics`
 
 ## Notes
 - Delayed flight: `arr_delay >= 15`.

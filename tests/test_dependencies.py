@@ -21,6 +21,7 @@ def test_core_dependencies_installed(module_name: str, pip_name: str, reason: st
     try:
         importlib.import_module(module_name)
     except Exception as exc:  # pragma: no cover - triggers only when missing/broken
+<<<<<<< HEAD
         extra_hint = ""
         if module_name == "lightgbm":
             extra_hint = (
@@ -31,3 +32,10 @@ def test_core_dependencies_installed(module_name: str, pip_name: str, reason: st
             f"Install with `python3 -m pip install {pip_name}` (see README).{extra_hint} "
             f"Import error: {exc}"
         )
+=======
+        raise AssertionError(
+            f"Dependency '{module_name}' failed to import ({reason}). "
+            f"Install with `python3 -m pip install {pip_name}` (see README). "
+            f"Original error: {type(exc).__name__}: {exc}"
+        ) from exc
+>>>>>>> 6a3734e5a8e18b23aa2c849a7ce15cbeac624f68
