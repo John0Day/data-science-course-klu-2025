@@ -8,11 +8,7 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 
 ## Setup
 - Python 3 with `pandas`, `scikit-learn`, `numpy`, `seaborn`, `matplotlib`.
-<<<<<<< HEAD
-- `lightgbm` for the full modeling pipeline: `python3 -m pip install lightgbm` (requires build tools; on macOS also install OpenMP via `brew install libomp`).
-=======
 - `lightgbm` is required for the full modeling pipeline and the test suite: `python3 -m pip install lightgbm` (requires build tools).
->>>>>>> 6a3734e5a8e18b23aa2c849a7ce15cbeac624f68
 - Install essentials:  
   `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib`
  - Install all core deps (including tests) in one shot:
@@ -21,20 +17,17 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ## Tests
 - Install pytest: `python3 -m pip install pytest`
 - Run: `python3 -m pytest`
-<<<<<<< HEAD
-=======
 - Quick dependency check: `python3 -m pytest tests/test_dependencies.py`
 - Dependency check fails if a package is missing or if an install is broken; reinstall the listed package.
->>>>>>> 6a3734e5a8e18b23aa2c849a7ce15cbeac624f68
 - Verify datasets are in `rawdata/`: `python3 -m pytest tests/test_data_files.py`
 
 ## Runner (interactive)
-`python3 runner.py` — choose between analysis, plots, or the full modeling pipeline; returns to the menu after each run. Choose 0 to exit.
+`python3 runner.py` — choose between analysis, plots, route classifier, baseline model, or full pipeline.
 
 ## Core scripts
 
 ### Analysis: delays, routes, events, weather
-`python3 analysis_script.py --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
+`python3 analysis_script --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
 - Outputs: delay rates by month/weekday/hour, carrier/airport counts, routes, avg delay minutes for top origins/dests, largest airports vs overall, event-day table, weather-driven delays.
 - Flags: `--sample`, `--nrows`, `--chunk-size`, `--top`, `--min-airport-flights`, `--event-top`.
 `python3 analysis_script --sample --nrows 50000 --chunk-size 250000 --top 10 --min-airport-flights 1000 --event-top 30`
@@ -62,6 +55,12 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 - Use `--plots` to save confusion matrices, profit curve, feature importance, regression, and clustering PNGs; `--diagnostics` adds ROC/learning/complexity curves (matplotlib required). Requires `lightgbm`.
 - Use `--sample` for the smaller dataset; omit it to run on the full CSV.
 `python3 modeling_pipeline.py --sample --nrows 50000 --plots --diagnostics`
+
+## Notes
+- Delayed flight: `arr_delay >= 15`.
+- Cancelled/diverted flights and rows without `arr_delay` are dropped.
+- Event mapping comes from `combined_schedules_with_airports.csv`; missing airports default to `none`.
+
 
 ## Notes
 - Delayed flight: `arr_delay >= 15`.
