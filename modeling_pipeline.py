@@ -1,34 +1,16 @@
+#!/usr/bin/env python3
 """
-End-to-end modeling script for 2024 flight delay data.
+Modeling pipeline for 2024 flight delay data.
 
-This version extends the original Modeling_Pipeline with **result visualizations**:
-Classification:
-- ROC curves + AUC (saved as PNG when --diagnostics)
-- Confusion matrices (LogReg, RandomForest, LightGBM @0.5; plus LGBM thresholds 0.3/0.5/0.7)
-- Profit / Expected Value curve vs threshold (LightGBM)
-- LightGBM global feature importance plot (bar chart)
-
-LightGBM diagnostics (when --diagnostics):
-- Learning curve (F1 vs training size)
-- Complexity curve (F1 vs max_depth)
-
-Regression:
-- Actual vs Predicted scatter
-- Residual distribution plot
-
-Clustering:
-- Cluster scatter (distance vs dep_hour), colored by cluster (on subsample)
-- Elbow method plot (SSE/inertia vs K) (on subsample)
-- Silhouette score vs K plot (on subsample)
-
-All plots are saved to ./plots/ (created if missing).
+Runs classification, regression, and clustering models with optional plots and
+diagnostics. Plots are saved to plots/ when requested.
 """
 
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Iterable, Optional, Tuple, Dict, List
+from typing import Iterable, Optional, Tuple, List
 
 import numpy as np
 import pandas as pd
@@ -61,30 +43,16 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     MATPLOTLIB_AVAILABLE = False
 
-# ---------------------------------------------------------------------------
 # Paths and data options
-# ---------------------------------------------------------------------------
-HERE = Path(__file__).resolve().parent
-for candidate in (HERE, HERE.parent):
-    csv_dir = candidate / "CSV Files"
-    if csv_dir.exists():
-        PROJECT_ROOT = candidate  # kept for possible future use
-        DATA_DIR = csv_dir
-        break
-else:  # pragma: no cover
-    raise FileNotFoundError("Could not locate 'CSV Files' directory (expected 'CSV Files').")
-
-DATA_PATH = DATA_DIR / "flight_data_2024.csv"
-SAMPLE_PATH = DATA_DIR / "flight_data_2024_sample.csv"
+DATA_PATH = Path("rawdata/flight_data_2024.csv")
+SAMPLE_PATH = Path("rawdata/flight_data_2024_sample.csv")
 
 PLOTS_DIR = Path("plots")
 
 ARRIVAL_DELAY_THRESHOLD = 15  # minutes for classification target
 DEFAULT_CHUNK_SIZE = 250_000  # rows per chunk when streaming
 
-# ---------------------------------------------------------------------------
 # Feature configuration
-# ---------------------------------------------------------------------------
 CATEGORICAL_FEATURES = [
     "op_unique_carrier",
     "origin",
@@ -135,18 +103,14 @@ DTYPES = {
 
 USECOLS = CATEGORICAL_FEATURES + RAW_NUMERIC_COLS + ["arr_delay", "fl_date"]
 
-# ---------------------------------------------------------------------------
 # Expected-value cost defaults (can be overridden via CLI)
-# ---------------------------------------------------------------------------
 DEFAULT_COST_TP = 100.0
 DEFAULT_COST_FP = -10.0
 DEFAULT_COST_FN = -200.0
 DEFAULT_COST_TN = 0.0
 
 
-# ---------------------------------------------------------------------------
 # Utilities: plotting helpers
-# ---------------------------------------------------------------------------
 def ensure_plots_dir() -> None:
     if MATPLOTLIB_AVAILABLE:
         PLOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -297,9 +261,7 @@ def plot_cluster_scatter_png(df: pd.DataFrame, labels: np.ndarray, filename: str
     savefig(filename)
 
 
-# ---------------------------------------------------------------------------
 # Data loading and feature preparation
-# ---------------------------------------------------------------------------
 def read_in_chunks(
     use_sample: bool = False,
     nrows: Optional[int] = None,
@@ -367,9 +329,7 @@ def prepare_features(chunks: Iterable[pd.DataFrame]) -> Tuple[pd.DataFrame, pd.D
     return df_clean, X
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 def print_classification_metrics(name: str, y_true, y_pred) -> None:
     acc = accuracy_score(y_true, y_pred)
     prec = precision_score(y_true, y_pred, zero_division=0)
@@ -530,9 +490,7 @@ def tune_lightgbm_hyperparams(X_train: pd.DataFrame, y_train: pd.Series) -> dict
     return grid.best_params_
 
 
-# ---------------------------------------------------------------------------
 # Classification
-# ---------------------------------------------------------------------------
 def run_classification(
     df_clean: pd.DataFrame,
     X: pd.DataFrame,
@@ -672,9 +630,7 @@ def run_classification(
         run_complexity_curve_lightgbm(X_train, y_train)
 
 
-# ---------------------------------------------------------------------------
 # Regression
-# ---------------------------------------------------------------------------
 def run_regression(df_clean: pd.DataFrame, X: pd.DataFrame, plots: bool = False) -> None:
     print("\n=== Regression: Predicting arrival delay (minutes) ===")
     Y_reg = df_clean["arr_delay"]
@@ -736,9 +692,7 @@ def run_regression(df_clean: pd.DataFrame, X: pd.DataFrame, plots: bool = False)
         plot_residuals_png(residuals, "regression_residuals_lightgbm.png")
 
 
-# ---------------------------------------------------------------------------
 # Clustering
-# ---------------------------------------------------------------------------
 def run_clustering(df_clean: pd.DataFrame, plots: bool = False) -> None:
     print("\n=== Clustering: MiniBatchKMeans on distance/time features ===")
     features = [c for c in CLUSTER_FEATURES if c in df_clean.columns]
@@ -792,9 +746,7 @@ def run_clustering(df_clean: pd.DataFrame, plots: bool = False) -> None:
         plot_elbow_and_silhouette_png(X_scaled, k_range)
 
 
-# ---------------------------------------------------------------------------
 # CLI + main
-# ---------------------------------------------------------------------------
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train and evaluate models on 2024 flight delay data.")
     parser.add_argument("--sample", action="store_true", help="Use the smaller sample file for a quick run.")

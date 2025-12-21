@@ -47,8 +47,10 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 ### Modeling pipeline (heavy)
 `python3 modeling_pipeline.py --sample --nrows 50000 --diagnostics`
 - Chunked loading from `rawdata/`, feature engineering, models: Logistic Regression, Random Forest, LightGBM (classification); Linear Regression, Gradient Boosting, LightGBM (regression); MiniBatchKMeans clustering.
-- Flags: `--sample`, `--nrows`, `--chunk-size`, `--diagnostics`, `--ev-costs C_TP C_FP C_FN C_TN`.
-- Saves ROC/learning/complexity curves if matplotlib is available; requires `lightgbm`.
+- Flags: `--sample`, `--nrows`, `--chunk-size`, `--diagnostics`, `--plots`, `--ev-costs C_TP C_FP C_FN C_TN`.
+- Use `--plots` to save confusion matrices, profit curve, feature importance, regression, and clustering PNGs; `--diagnostics` adds ROC/learning/complexity curves (matplotlib required). Requires `lightgbm`.
+- Use `--sample` for the smaller dataset; omit it to run on the full CSV.
+`python3 modeling_pipeline.py --sample --nrows 50000 --plots --diagnostics`
 
 ## Notes
 - Delayed flight: `arr_delay >= 15`.
