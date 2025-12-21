@@ -6,7 +6,7 @@ This project explores 2024 US flight delays, event-day impacts (sports schedules
 1. Download the Dataset from Kaggle, under this link: https://www.kaggle.com/datasets/hrishitpatil/flight-data-2024.
 2. Place the big dataset called `flight_data_2024.csv` in the `rawdata/` folder.
 3. Install all the needed dependencies: `python3 -m pip install pandas scikit-learn numpy seaborn matplotlib lightgbm`
-4. Run the command `python3 runner.py` to open the choices menu or run commands straight from the ##Core scirpt list further down.
+4. Run the command `python3 runner.py` to open the main menu or run specific commands straight from the core script list.
 
 ## Core script
 
